@@ -25,12 +25,12 @@ namespace LearnDotNet
 
             string ques1Sentence = "<s> English is the preferred language for American and British candidates . </s>";
             ques1Sentence = ques1Sentence.Trim().ToLower();
-            //doBiGram(ques1Sentence, actualSentenceBigramCountMap, actualSentenceUnigramCountMap, totalNumberWordsInActualSentence);
+            //doBiGramWithoutSmoothing(ques1Sentence, actualSentenceBigramCountMap, actualSentenceUnigramCountMap, totalNumberWordsInActualSentence);
 
             string ques2Sentence = "<s> American English and British English are variants of the same language . </s>";
             ques2Sentence = ques2Sentence.Trim().ToLower();
-            //doUniGram(ques2Sentence, actualSentenceUnigramCountMap, totalNumberWordsInActualSentence);
-            doBiGram(ques2Sentence, actualSentenceBigramCountMap, actualSentenceUnigramCountMap, totalNumberWordsInActualSentence);
+            doUniGram(ques2Sentence, actualSentenceUnigramCountMap, totalNumberWordsInActualSentence);
+            //doBiGram(ques2Sentence, actualSentenceBigramCountMap, actualSentenceUnigramCountMap, totalNumberWordsInActualSentence);
             Console.ReadLine();
         }
 
@@ -48,11 +48,35 @@ namespace LearnDotNet
                 {
                     double wordProb =  actualSentenceUnigramCountMap[word] / (float)totalNumberWordsInActualSentence;
                     result *=  wordProb;
-                    Console.WriteLine("P(" + word + ") = " + Math.Round(wordProb,3));
+                    string prob = "(" + actualSentenceUnigramCountMap[word] + "/" + totalNumberWordsInActualSentence + ")";
+                    Console.WriteLine("P(" + word + ") = " + prob + " = " + Math.Round(wordProb,3));
                 }             
             }
             Console.WriteLine(" Unigram sentence probability = " + result);
             
+        }
+
+        private static void doBiGramWithoutSmoothing(string sentence, SortedDictionary<string, int> actualSentenceBigramCountMap, SortedDictionary<string, int> actualSentenceUnigramCountMap, int totalNumberWordsInActualSentence)
+        {
+            string[] splittedSentence = sentence.Split(new Char[] { ' ' });
+            double totalProb = 1.0;
+            int numberOfUniqueWords = actualSentenceUnigramCountMap.Keys.Count();
+            for (int i = 0; i < splittedSentence.Length - 1; i++)
+            {
+                string numerator = splittedSentence[i] + " " + splittedSentence[i + 1];
+                numerator = numerator.Trim();
+                string denominator = splittedSentence[i];
+                denominator = denominator.Trim();
+                if (actualSentenceBigramCountMap.ContainsKey(numerator) && actualSentenceUnigramCountMap.ContainsKey(denominator))
+                {
+                    double bigramProb = (actualSentenceBigramCountMap[numerator] ) / ((double)actualSentenceUnigramCountMap[denominator]);
+                    totalProb *= bigramProb;
+                    string prob = "(" + actualSentenceBigramCountMap[numerator] + " )/(" + actualSentenceUnigramCountMap[denominator] + " )";
+                    Console.Write("P(" + numerator + ") = " + prob + " = " + Math.Round(bigramProb, 3) + "\n");
+
+                }
+            }
+            Console.Write("Sentence bigram prob = " + totalProb + "\n");
         }
 
         private static void doBiGram(string sentence, SortedDictionary<string, int> actualSentenceBigramCountMap, SortedDictionary<string, int> actualSentenceUnigramCountMap, int totalNumberWordsInActualSentence)
@@ -70,7 +94,8 @@ namespace LearnDotNet
                 {      
                     double bigramProb = (actualSentenceBigramCountMap[numerator] + 1) / ((double)actualSentenceUnigramCountMap[denominator] + numberOfUniqueWords);
                     totalProb *= bigramProb;
-                    Console.Write("P(" + numerator + ") = " + Math.Round(bigramProb,3) + "\n");
+                    string prob = "(" + actualSentenceBigramCountMap[numerator] + " + 1 )/(" + actualSentenceUnigramCountMap[denominator] + " + " + numberOfUniqueWords + " )";
+                    Console.Write("P(" + numerator + ") = " + prob + " = " + Math.Round(bigramProb, 3) + "\n");
                 
                 }
                 else if (!actualSentenceBigramCountMap.ContainsKey(numerator) && actualSentenceUnigramCountMap.ContainsKey(denominator))
@@ -78,21 +103,24 @@ namespace LearnDotNet
                     Console.WriteLine(" Not present in bigram map = " + numerator);
                     double bigramProb = 1 / ((double)actualSentenceUnigramCountMap[denominator] + numberOfUniqueWords);
                     totalProb *= bigramProb;
-                    Console.Write("P(" + numerator + ") = " + Math.Round(bigramProb, 3) + "\n");
+                    string prob = "( 1 )/(" + actualSentenceUnigramCountMap[denominator] + " + " + numberOfUniqueWords + " )";
+                    Console.Write("P(" + numerator + ") = " + prob + " = " + Math.Round(bigramProb, 3) + "\n");
                 }
                 else if (actualSentenceBigramCountMap.ContainsKey(numerator) && !actualSentenceUnigramCountMap.ContainsKey(denominator))
                 {
                     Console.WriteLine(" Not present in unigram map = " + denominator);
                     double bigramProb = (actualSentenceBigramCountMap[numerator] + 1)/ (double)numberOfUniqueWords;
+                    string prob = "("+actualSentenceBigramCountMap[numerator] + "+ 1 )/(" + numberOfUniqueWords + " )";
                     totalProb *= bigramProb;
-                    Console.Write("P(" + numerator + ") = " + Math.Round(bigramProb, 3) + "\n");
+                    Console.Write("P(" + numerator + ") = " + prob + " = " + Math.Round(bigramProb, 3) + "\n");
                 }
                 else
                 {
                     Console.WriteLine(" Not present in unigram map = " + denominator);
                     double bigramProb = 1 / (double)numberOfUniqueWords;
                     totalProb *= bigramProb;
-                    Console.Write("P(" + numerator + ") = " + Math.Round(bigramProb, 3) + "\n");
+                    string prob = "( 1 )/(" + numberOfUniqueWords + " )";
+                    Console.Write("P(" + numerator + ") = " + prob + " = " + Math.Round(bigramProb, 3) + "\n");
                 }
                
             }
